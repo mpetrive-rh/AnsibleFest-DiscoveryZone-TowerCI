@@ -1,0 +1,6 @@
+{
+    "name": "{{ gitlab_create_group_name }}",
+    "path": "{{ gitlab_create_group_path | default(gitlab_create_group_name)}}",
+    "description": "{{ gitlab_create_group_description }}",
+    "visibility": "{{ gitlab_create_group_visibility }}"
+}

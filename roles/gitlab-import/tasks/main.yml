@@ -1,0 +1,62 @@
+---
+
+- name: issue failure when private token not defined
+  fail:
+    msg: |
+      gitlab_private_token is not defined.  Please login in to the web interface
+      as root and obtain a personal access token at https://gitlab/profile/personal_access_tokens.
+      The token values should be added to the vars/main.yml file
+  when: gitlab_private_token is not defined
+
+- name: ensure git is insalled
+  yum:
+    name: git
+    state: present
+  become: yes
+
+- name: gitlab automation
+  block:
+
+  - name: ensure vagrant user has a PPK pair
+    user:
+      name: vagrant
+      ssh_key_file: .ssh/id_rsa
+      ssh_key_bits: 2048
+      generate_ssh_key: yes
+
+  - name: get contens of public key
+    shell: cat /home/vagrant/.ssh/id_rsa.pub
+    register: key
+
+  - name: add public key to gitlab root user
+    uri:
+      url: https://localhost/api/v4/user/keys
+      method: POST
+      body:
+        title: default
+        key: "{{key.stdout}}"
+      status_code:
+        - 200
+        - 201
+        - 400
+    register: project_exists
+    ignore_errors: yes
+
+  - include_tasks: import_project.yml
+    vars:
+      gitlab_import_project: tower-onboarding
+
+  - include_tasks: import_project.yml
+    vars:
+      gitlab_import_project: tower-starter-pack
+
+  remote_user: vagrant
+  become: false
+  module_defaults:
+    uri:
+      validate_certs: no
+      return_content: yes
+      body_format: json
+      headers:
+        Private-Token:  "{{gitlab_private_token}}"
+      #force_basic_auth: yes

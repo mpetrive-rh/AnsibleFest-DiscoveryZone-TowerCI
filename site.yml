@@ -1,0 +1,71 @@
+---
+- name: Provision Gitlab Demo
+  hosts: gitlab
+  become: true
+  gather_facts: yes
+  vars_files:
+    - vars/main.yml
+  vars:
+    skip_remote: true
+
+  roles:
+    # setup hosts-file on your local machine for convenience
+    - role: hosts-file
+
+    # install gitlab
+    - role: geerlingguy.gitlab
+
+    # set admin password and reconfigure
+    - role: gitlab-post-config
+
+    # import projects into gitlab
+    - role: gitlab-import
+
+- name: Provision Gitlab runner demo
+  hosts: gitlab-runner
+  become: true
+  gather_facts: yes
+  vars_files:
+    - vars/main.yml
+  vars:
+    skip_remote: true
+
+  roles:
+    # setup hosts-file on your local machine for convenience
+    - role: hosts-file
+
+    # install gitlab
+    - role: geerlingguy.gitlab
+      when: "'tag_Name_gitlab' in group_names"
+
+    # obtain the runnger token from gitlab
+    - role: gitlab-runner-token
+      when: "'tag_Name_gitlab-runner' in group_names"
+      delegate_to: gitlab
+
+    - role: copy-gitlab-ssl
+      when: "'tag_Name_gitlab-runner' in group_names"
+
+    - role: riemers.gitlab-runner
+      when: "'tag_Name_gitlab-runner' in group_names"
+
+    - role: ansible-lint
+      when: "'tag_Name_gitlab-runner' in group_names"
+
+    - role: molecule
+      when: "'tag_Name_gitlab-runner' in group_names"
+
+
+- name: Provision Tower Demo
+  hosts: ansible-tower
+  become: true
+  gather_facts: yes
+  vars_files:
+    - vars/main.yml
+  roles:
+    # setup hosts-file on your local machine for convenience
+    - role: hosts-file
+
+    - role: tower
+      when: "'tag_Name_ansible-tower' in group_names"
+      tags: tower

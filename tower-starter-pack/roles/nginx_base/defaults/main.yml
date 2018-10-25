@@ -1,0 +1,6 @@
+---
+# defaults file for nginx_base
+
+nginx_base_pkgs:
+  - nginx
+  - firewalld

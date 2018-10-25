@@ -1,0 +1,44 @@
+---
+- name: List configured runners
+  command: gitlab-runner list
+  register: configured_runners
+  changed_when: False
+  check_mode: no
+
+- name: Register runner to GitLab
+  command: >
+    gitlab-runner register
+    --non-interactive
+    --url '{{ gitlab_runner_coordinator_url }}'
+    --registration-token '{{ gitlab_runner_registration_token }}'
+    --description '{{ gitlab_runner_description }}'
+    --tag-list '{{ gitlab_runner_tags | join(",") }}'
+    --executor '{{ gitlab_runner_executor }}'
+    --limit '{{ gitlab_runner_concurrent_specific }}'
+    --locked='{{gitlab_runner_locked}}'
+    {% for env_var in gitlab_runner_env_vars %}
+    --env '{{ env_var }}'
+    {% endfor %}
+    --docker-image '{{ gitlab_runner_docker_image }}'
+    {% if gitlab_runner_docker_privileged %}
+    --docker-privileged
+    {% endif %}
+    {% for volume in gitlab_runner_docker_volumes | default([]) %}
+    --docker-volumes "{{ volume }}"
+    {% endfor %}
+    --ssh-user '{{ gitlab_runner_ssh_user }}'
+    --ssh-host '{{ gitlab_runner_ssh_host }}'
+    --ssh-port '{{ gitlab_runner_ssh_port }}'
+    --ssh-password '{{ gitlab_runner_ssh_password }}'
+    --ssh-identity-file '{{ gitlab_runner_ssh_identity_file }}'
+    {% if gitlab_runner_cache_type is defined %}
+    --cache-type '{{ gitlab_runner_cache_type }}'
+    --cache-s3-server-address '{{ gitlab_runner_cache_s3_server_address }}'
+    --cache-s3-access-key '{{ gitlab_runner_cache_s3_access_key }}'
+    --cache-s3-secret-key '{{ gitlab_runner_cache_s3_secret_key }}'
+    --cache-s3-bucket-name '{{ gitlab_runner_cache_s3_bucket_name }}'
+    --cache-s3-insecure '{{ gitlab_runner_cache_s3_insecure }}'
+    --cache-cache-shared '{{ gitlab_runner_cache_cache_shared }}'
+    {% endif %}
+  when: configured_runners.stderr.find('\n' + gitlab_runner_description) == -1
+  no_log: yes

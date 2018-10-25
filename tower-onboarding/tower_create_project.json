@@ -1,0 +1,11 @@
+{
+    "name": "{{ tower_create_project_name }}",
+    "description": "{{ tower_create_project_description }}",
+    "scm_type": "git",
+    "scm_url": "git@{{ gitlab_base_url }}:{{ gitlab_create_group_path }}/tower-starter-pack.git",
+    "scm_clean": true,
+    "scm_delete_on_update": false,
+    "credential": "{{ tower_create_project_credential }}",
+    "organization": "{{ tower_create_project_organization }}",
+    "scm_update_on_launch": false
+}

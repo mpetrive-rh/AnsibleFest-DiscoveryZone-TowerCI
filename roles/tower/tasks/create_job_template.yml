@@ -1,0 +1,117 @@
+---
+
+- include_vars:
+    file: "{{role_path}}/templates/{{item}}.json"
+    name: jt_detail
+
+- name: create job template
+  uri:
+    url: "https://{{ tower_default_api_host }}/api/v2/job_templates/"
+    method: POST
+    body: "{{ jt_detail }}"
+    body_format: json
+    status_code:
+      - 200
+      - 201
+      - 400
+
+- name: get job template details
+  uri:
+    url: "https://{{ tower_default_api_host }}/api/v2/job_templates/?name={{jt_detail.name}}"
+    method: GET
+    status_code:
+      - 200
+      - 201
+      - 400
+  register: job_template_id
+
+- set_fact:
+    jt_id: "{{job_template_id.json.results[0].id}}"
+
+- name: add survey specs
+  uri:
+    url: "https://{{ tower_default_api_host }}/api/v2/job_templates/{{jt_id}}/survey_spec/"
+    method: POST
+    body: "{{ jt_detail.survey_spec }}"
+    body_format: json
+    status_code:
+      - 200
+      - 201
+      - 400
+
+- name: add custom credentials
+  uri:
+    url: "https://{{ tower_default_api_host }}/api/v2/job_templates/{{jt_id}}/credentials/"
+    method: POST
+    body: ' { "id": {{tower_credential_git_token_id | int}} }'
+      # once jinja templating is fixed, move to a yaml defined dict
+      # id: "{{tower_credential_git_token_id | int}}"
+    body_format: json
+    status_code:
+      - 200
+      - 201
+      - 204
+      - 400
+
+- name: add tower credentials
+  uri:
+    url: "https://{{ tower_default_api_host }}/api/v2/job_templates/{{jt_id}}/credentials/"
+    method: POST
+    body: ' { "id": {{ tower_credential_tower_id | int }} }'
+      # once jinja templating is fixed, move to a yaml defined dict
+      # id: "{{ tower_credential_tower_id | int }}"
+    body_format: json
+    status_code:
+      - 200
+      - 201
+      - 204
+      - 400
+
+- name: determine if first workflow node
+  uri:
+    url: "https://{{ tower_default_api_host }}/api/v2/workflow_job_templates/{{workflow_job_id}}/workflow_nodes/"
+    method: GET
+    status_code:
+      - 200
+      - 201
+  register: workflow_nodes
+
+- name: get a list of existing workflow node job templates id
+  set_fact:
+    workflow_node_ids: "{{ workflow_nodes.json.results | map(attribute='unified_job_template') | list }}"
+
+- name: when this is the first node in the workflow
+  block:
+  - name: create onboarding workflow nodes
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/workflow_job_templates/{{workflow_job_id}}/workflow_nodes/"
+      method: POST
+      body:
+        unified_job_template: "{{jt_id}}"
+        organization: "{{tower_org.id}}"
+      body_format: json
+      status_code:
+        - 200
+        - 201
+        - 400
+  when: not workflow_node_ids
+
+- name: when this is not first node in the workflow
+  block:
+
+  - set_fact:
+      workflow_node_id: "{{workflow_nodes.json.results[-1].id}}"
+
+  - name: create onboarding workflow nodes
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/workflow_job_template_nodes/{{workflow_node_id}}/success_nodes/"
+      method: POST
+      body:
+        unified_job_template: "{{jt_id}}"
+        organization: "{{tower_org.id}}"
+      body_format: json
+      status_code:
+        - 200
+        - 201
+        - 400
+  when: workflow_node_ids and ( jt_id | int ) not in workflow_node_ids

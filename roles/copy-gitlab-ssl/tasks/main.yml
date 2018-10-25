@@ -1,0 +1,25 @@
+---
+# tasks file for copy-gitlab-ssl
+
+- name: create certs subdir on gitlab-runner vm
+  file:
+    path: /etc/gitlab-runner/certs
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: get cert file
+  slurp:
+    src: /etc/gitlab/ssl/gitlab.crt
+  register: cert_content
+  delegate_to: gitlab
+
+- name: copy cert file to gitlab-runner
+  copy:
+    dest: /etc/gitlab-runner/certs/gitlab.crt
+    content: "{{ cert_content.content | b64decode }}"
+    owner: root
+    group: root
+    mode: 0644
+    force: true

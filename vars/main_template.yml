@@ -1,0 +1,22 @@
+---
+# Misc GitLab Configuration.
+gitlab_external_url: "https://gitlab/"
+
+# GitLab SSL Configuration.
+gitlab_redirect_http_to_https: "true"
+gitlab_ssl_certificate: "/etc/gitlab/ssl/gitlab.crt"
+gitlab_ssl_certificate_key: "/etc/gitlab/ssl/gitlab.key"
+
+# SSL Self-signed Certificate Configuration.
+gitlab_create_self_signed_cert: "true"
+gitlab_self_signed_cert_subj: "/C=US/ST=Pennsylvania/L=Philadelphia/O=IT/CN=gitlab"
+
+# Misc gitlab-runner Configuration.
+gitlab_runner_package_name: "gitlab-runner"
+gitlab_runner_coordinator_url: "https://gitlab/"
+
+# gitlab-runner register Configuration.
+gitlab_runner_description: "GitLab Shared Runner 1a"
+gitlab_root_password: password
+
+#gitlab_private_token: TO BE DEFINED

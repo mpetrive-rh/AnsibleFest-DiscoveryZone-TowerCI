@@ -1,0 +1,39 @@
+---
+# tasks file for nginx_base
+
+- name: enable epel
+  yum:
+    name: epel-release
+    state: present
+
+- name: install netstat for testing
+  yum:
+    name: net-tools
+    state: present
+
+- name: install {{item}}
+  yum:
+    name: "{{item}}"
+    state: present
+  with_items: "{{nginx_base_pkgs}}"
+
+- name: ensure service ({{item}}) is started and enabled
+  service:
+    name: "{{item}}"
+    state: started
+    enabled: true
+  with_items: "{{nginx_base_pkgs}}"
+
+- name: open http port
+  firewalld:
+    service: http
+    permanent: true
+    state: enabled
+
+- name: deploy static page to web root
+  copy:
+    content: |
+      <div style="text-align: center">
+        <h2>Managed by Ansible Demo Stuff</h2>
+      </div>
+    dest: /usr/share/nginx/index.html

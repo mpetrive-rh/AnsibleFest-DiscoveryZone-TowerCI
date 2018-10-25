@@ -1,0 +1,166 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    tower_base_url: "{{ lookup('ENV', 'TOWER_HOST')}}"
+    tower_user: "{{ lookup('ENV', 'TOWER_USERNAME')}}"
+    tower_password: "{{ lookup('ENV', 'TOWER_PASSWORD')}}"
+  vars_files:
+  - vars/gitlab.yml
+  tasks:
+    - name: create organization for new group/project
+      uri:
+        url: "https://{{ tower_base_url }}/api/v2/organizations/"
+        method: POST
+        user: "{{ tower_user }}"
+        password: "{{ tower_password }}"
+        body:
+          name: "{{gitlab_create_group_path}}"
+          description: "gitlab_create_group_path organization"
+        body_format: json
+        validate_certs: no
+        status_code:
+          - 200
+          - 201
+          - 400
+        force_basic_auth: true
+
+    - name: get organization
+      uri:
+        url: "https://{{ tower_base_url }}/api/v2/organizations/?name={{gitlab_create_group_path}}"
+        method: GET
+        user: "{{ tower_user }}"
+        password: "{{ tower_password }}"
+        validate_certs: no
+        status_code:
+          - 200
+          - 201
+          - 400
+        force_basic_auth: true
+      register: org_info
+
+    - set_fact:
+        tower_org_id: "{{org_info.json.results[0].id}}"
+
+    - name: create SCM credential
+      uri:
+        url: "https://{{ tower_base_url }}/api/v2/credentials/"
+        method: POST
+        user: "{{ tower_user }}"
+        password: "{{ tower_password }}"
+        body:
+          name: "{{gitlab_create_group_path}}-scm-cred"
+          description: "{{gitlab_create_group_path}} default SCM credential "
+          organization: "{{tower_org_id}}"
+          credential_type: 2
+          inputs:
+            username: ""
+            ssh_key_data: "{{gitlab_private_key}}"
+        body_format: json
+        validate_certs: no
+        status_code:
+        - 200
+        - 201
+        - 400
+        force_basic_auth: true
+
+    - name: get credential
+      uri:
+        url: "https://{{ tower_base_url }}/api/v2/credentials/?name={{gitlab_create_group_path}}-scm-cred&organization={{tower_org_id}}"
+        method: GET
+        user: "{{ tower_user }}"
+        password: "{{ tower_password }}"
+        validate_certs: no
+        status_code:
+          - 200
+          - 201
+          - 400
+        force_basic_auth: true
+      register: cred_info
+
+    - set_fact:
+        tower_cred_id: "{{cred_info.json.results[0].id}}"
+
+    - name: create inventory
+      uri:
+        url: "https://{{ tower_base_url }}/api/v2/inventories/"
+        method: POST
+        user: "{{ tower_user }}"
+        password: "{{ tower_password }}"
+        body:
+          name: "{{gitlab_create_group_path}}-inventory"
+          description: "{{gitlab_create_group_path}} default inventory"
+          organization: "{{tower_org_id}}"
+        body_format: json
+        validate_certs: no
+        status_code:
+        - 200
+        - 201
+        - 400
+        force_basic_auth: true
+
+    - name: get inventory
+      uri:
+        url: "https://{{ tower_base_url }}/api/v2/inventories/?name={{gitlab_create_group_path}}-inventory&organization={{tower_org_id}}"
+        method: GET
+        user: "{{ tower_user }}"
+        password: "{{ tower_password }}"
+        validate_certs: no
+        status_code:
+          - 200
+          - 201
+          - 400
+        force_basic_auth: true
+      register: inv_info
+
+    - set_fact:
+        tower_inv_id: "{{inv_info.json.results[0].id}}"
+
+    - name: create tower project
+      uri:
+        url: "https://{{ tower_base_url }}/api/v2/projects/"
+        method: POST
+        user: "{{ tower_user }}"
+        password: "{{ tower_password }}"
+        body: "{{ lookup('template','tower_create_project.json') }}"
+        body_format: json
+        validate_certs: no
+        status_code:
+          - 200
+          - 201
+          - 400
+        force_basic_auth: true
+      register: tower_create_project_result
+      changed_when: tower_create_project_result.status == 201
+      vars:
+        tower_create_project_credential: "{{tower_cred_id}}"
+        tower_create_project_organization: "{{tower_org_id}}"
+
+    - name: get project
+      uri:
+        url: "https://{{ tower_base_url }}/api/v2/projects/?name={{tower_create_project_name}}&organization={{tower_org_id}}"
+        method: GET
+        user: "{{ tower_user }}"
+        password: "{{ tower_password }}"
+        validate_certs: no
+        status_code:
+          - 200
+          - 201
+          - 400
+        force_basic_auth: true
+      register:  proj_info
+
+    - set_fact:
+        tower_project_id: "{{proj_info.json.results[0].id}}"
+
+    # - name: debug tower_create_project_result var
+    #   debug:
+    #     var: tower_create_project_result
+
+    - name: set var for project id
+      set_stats:
+        data:
+          tower_project_id: "{{ tower_project_id }}"
+          tower_inv_id: "{{tower_inv_id}}"
+      #when: tower_create_project_result.status == 201

@@ -1,0 +1,65 @@
+{
+  "__credential": "{{tower_credential_git_token_id}}",
+  "__credential_type": "{{tower_credential_git_token_type_id}}",
+  "asset_type": "job_template",
+  "inventory": "{{tower_inventory.id}}",
+  "name": "gitlab-create-group",
+  "organization": "{{tower_org.id}}",
+  "playbook": "gitlab_create_group.yml",
+  "project": "{{tower_proj.id}}",
+  "survey_enabled": true,
+  "survey_spec": {
+    "description": "",
+    "name": "",
+    "spec": [
+      {
+        "choices": "",
+        "default": "",
+        "max": 1024,
+        "min": 0,
+        "new_question": true,
+        "question_description": "",
+        "question_name": "Gitlab group name",
+        "required": true,
+        "type": "text",
+        "variable": "gitlab_create_group_name"
+      },
+      {
+        "choices": "",
+        "default": "",
+        "max": 1024,
+        "min": 0,
+        "new_question": true,
+        "question_description": "",
+        "question_name": "GItlab Group Desc",
+        "required": true,
+        "type": "text",
+        "variable": "gitlab_create_group_description"
+      },
+      {
+        "choices": "",
+        "default": "public",
+        "max": 1024,
+        "min": 0,
+        "new_question": true,
+        "question_description": "",
+        "question_name": "Gitlab  Group Visibility",
+        "required": true,
+        "type": "text",
+        "variable": "gitlab_create_group_visibility"
+      },
+      {
+        "choices": "",
+        "default": "gitlab",
+        "max": 1024,
+        "min": 0,
+        "new_question": true,
+        "question_description": "",
+        "question_name": "Gitlab Base URL",
+        "required": true,
+        "type": "text",
+        "variable": "gitlab_base_url"
+      }
+    ]
+  }
+}

@@ -1,0 +1,58 @@
+---
+
+- name: setup EPEL
+  yum:
+    name: epel-release
+    state: present
+
+- name: setup EPEL
+  yum:
+    name: epel-release
+    state: present
+
+- name: install dependencies
+  yum:
+    name: "{{item}}"
+    state: present
+  with_items:
+  - gcc
+  - python-pip
+  - python-devel
+  - openssl-devel
+  - libselinux-python
+  - docker
+
+- name: Install molecule
+  pip:
+    name: "{{item}}"
+    state: present
+  with_items:
+  - molecule
+  - docker
+
+- name: enable docker
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: ensure group is created
+  group:
+    name: docker
+    state: present
+
+- name: ensure vagrant is there and added to docker
+  user:
+    name: gitlab-runner
+    groups: docker
+  register: vagrant_group_mem
+
+- name: reboot this machine
+  shell: sleep 2; reboot
+  async: 30
+  poll: 0
+  when: vagrant_group_mem.changed
+
+- name: wait for machine to come back
+  wait_for_connection:
+    delay: 10

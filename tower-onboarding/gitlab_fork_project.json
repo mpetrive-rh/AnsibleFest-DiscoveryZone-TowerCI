@@ -1,0 +1,4 @@
+{
+    "id": "{{ gitlab_fork_project_id }}",
+    "namespace": "{{ gitlab_create_group_name }}"
+}

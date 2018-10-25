@@ -1,0 +1,7 @@
+---
+
+tower_default_admin_org: Admin
+tower_default_os_user: vagrant
+tower_default_api_host: localhost
+tower_default_user: admin
+tower_default_password: password

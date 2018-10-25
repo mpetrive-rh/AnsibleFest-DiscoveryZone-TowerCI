@@ -1,0 +1,73 @@
+---
+
+- block:
+  - name: check if project is already created
+    uri:
+      url: "https://{{gitlab_import_host}}/api/v4/search?scope=projects&search={{gitlab_import_project}}"
+    register: project_exists
+
+  - name: create project
+    uri:
+      url: "https://{{gitlab_import_host}}/api/v4/projects"
+      body:
+        name: "{{gitlab_import_project}}"
+      method: POST
+      status_code: [ 201 ]
+    when: not project_exists.json
+
+  - name: get project after creation ensure
+    uri:
+      url: "https://{{gitlab_import_host}}/api/v4/search?scope=projects&search={{gitlab_import_project}}"
+    register: project_info
+
+  - name: set project facts
+    set_fact:
+      project_id: "{{project_info.json[0].id}}"
+      project_url: "{{project_info.json[0].ssh_url_to_repo}}"
+
+  - name: move over {{gitlab_import_project}}
+    synchronize:
+      src: "{{gitlab_import_project}}"
+      #not ideal but we're using vagrant so we know home dir is set
+      dest: /home/vagrant
+
+  - name: ensure proper permissions
+    file:
+      path: "./{{gitlab_import_project}}"
+      owner: vagrant
+      group: vagrant
+      state: directory
+
+  - name: ensure gitlab is a known host
+    shell: "{{item}}"
+    with_items:
+    - "touch ~/.ssh/known_hosts"
+    - "ssh-keyscan gitlab >> ~/.ssh/known_hosts"
+
+  - name: determine if repo already setup at origin
+    shell: git remote | grep -s origin
+    args:
+      chdir: "{{gitlab_import_project}}"
+    register: git_status
+    failed_when: false
+
+  - name: initialize repo
+    shell: "{{item}}"
+    args:
+      chdir: "{{gitlab_import_project}}"
+    with_items:
+    - "git config --global user.name 'root' "
+    - "git config --global user.email 'root@gitlab' "
+    - "git init"
+    - "git remote add origin {{project_url}}"
+    when: git_status.rc == 1
+
+  - name: add and commit all files for {{gitlab_import_project}}
+    shell: "{{item}}"
+    args:
+     chdir: "{{gitlab_import_project}}"
+    with_items:
+     - "git add -A ."
+     - "git status -s | grep -s '' && git commit -m 'initial cut'"
+     - "git push -u origin master"
+    ignore_errors: yes

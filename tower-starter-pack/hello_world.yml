@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: gather subset of facts with setup module
+      setup:
+        gather_subset: "!all"
+      register: hello_world_facts
+
+    - name: print facts to stdout
+      debug:
+        var: hello_world_facts

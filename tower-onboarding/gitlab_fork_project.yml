@@ -1,0 +1,81 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    gitlab_namespace: root
+  vars_files:
+  - vars/gitlab.yml
+  tasks:
+    - name: Get project id of project to fork
+      uri:
+        url: "https://{{gitlab_base_url}}/api/v4/search?scope=projects&search={{gitlab_import_project}}"
+        validate_certs: no
+        headers:
+          Private-Token: "{{ gitlab_access_token }}"
+      register: project_info_global
+
+    - set_fact:
+        project_info: "{{project_info_global.json | selectattr('namespace.name', 'equalto', gitlab_namespace) | list }}"
+
+    - name: if not project found fail
+      fail:
+        msg: "Gitlab project {{gitlab_import_project}} not found"
+      when: not project_info
+
+    - name: set project facts
+      set_fact:
+        gitlab_fork_project_id: "{{project_info[0].id}}"
+
+    - name: fork template project to new group
+      uri:
+        url: "https://{{ gitlab_base_url }}/api/v4/projects/{{gitlab_fork_project_id}}/fork"
+        method: POST
+        headers:
+          Private-Token: "{{ gitlab_access_token }}"
+        body: "{{ lookup('template','gitlab_fork_project.json') }}"
+        body_format: json
+        validate_certs: no
+        status_code:
+          - 200
+          - 201
+          - 400
+          - 409
+      register: gitlab_fork_project_result
+      changed_when: gitlab_fork_project_result.status == 201
+
+    - name: debug gitlab_fork_project_result var
+      debug:
+        var: gitlab_fork_project_result
+
+    - name: Get project id of forked project
+      uri:
+        url: "https://{{gitlab_base_url}}/api/v4/search?scope=projects&search={{gitlab_import_project}}"
+        validate_certs: no
+        headers:
+          Private-Token: "{{ gitlab_access_token }}"
+      register: project_info_global
+
+    - set_fact:
+        project_info: "{{project_info_global.json | selectattr('namespace.name', 'equalto', gitlab_create_group_name) | list }}"
+
+    - name: set project facts
+      set_fact:
+        gitlab_project_id: "{{project_info[0].id}}"
+
+    - name: Create deploy key
+      uri:
+        url: "https://{{gitlab_base_url}}/api/v4/projects/{{gitlab_project_id}}/deploy_keys"
+        method: POST
+        body:
+          id: "{{gitlab_project_id}}"
+          title: "default deploy key"
+          key: "{{gitlab_public_key}}"
+        body_format: json
+        validate_certs: no
+        status_code:
+          - 200
+          - 201
+        headers:
+          Private-Token: "{{ gitlab_access_token }}"
+      register: project_info_global

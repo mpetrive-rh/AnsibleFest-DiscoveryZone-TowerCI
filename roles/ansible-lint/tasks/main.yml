@@ -1,0 +1,17 @@
+---
+# tasks file for ansible-lint
+
+- name: Install epel-release
+  yum:
+    name: epel-release
+    state: present
+
+- name: Install python-pip
+  yum:
+    name: python-pip
+    state: present
+
+- name: Install ansible-lint
+  pip:
+    name: ansible-lint
+    state: present

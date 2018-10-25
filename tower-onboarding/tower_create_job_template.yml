@@ -1,0 +1,35 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    tower_base_url: "{{ lookup('ENV', 'TOWER_HOST')}}"
+    tower_user: "{{ lookup('ENV', 'TOWER_USERNAME')}}"
+    tower_password: "{{ lookup('ENV', 'TOWER_PASSWORD')}}"
+  tasks:
+    - name: create tower job template
+      uri:
+        url: "https://{{ tower_base_url }}/api/v2/job_templates/"
+        method: POST
+        user: "{{ tower_user }}"
+        password: "{{ tower_password }}"
+        body: "{{ lookup('template','tower_create_job_template.json') }}"
+        body_format: json
+        validate_certs: no
+        status_code:
+          - 200
+          - 201
+          - 202
+        force_basic_auth: yes
+      register: tower_create_job_template_result
+      until: tower_create_job_template_result.status == 201 or
+             tower_create_job_template_result.status == 202
+      retries: 10
+      delay: 30
+      changed_when: tower_create_job_template_result.status == 201 or
+                    tower_create_job_template_result.status == 202
+      when: tower_project_id is defined
+
+    - name: debug tower_create_job_template_result var
+      debug:
+        var: tower_create_job_template_result

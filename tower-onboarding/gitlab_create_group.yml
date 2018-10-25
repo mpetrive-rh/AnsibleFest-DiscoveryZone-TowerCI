@@ -1,0 +1,25 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: create new gitlab group
+      uri:
+        url: "https://{{ gitlab_base_url }}/api/v4/groups"
+        method: POST
+        headers:
+          Private-Token: "{{ gitlab_access_token }}"
+        body: "{{ lookup('template','gitlab_create_group.json') }}"
+        body_format: json
+        validate_certs: no
+        status_code:
+          - 200
+          - 201
+          - 400
+      register: gitlab_create_group_result
+      changed_when: gitlab_create_group_result.status == 201
+
+    - name: debug gitlab_create_group_result var
+      debug:
+        var: gitlab_create_group_result

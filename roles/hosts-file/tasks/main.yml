@@ -1,0 +1,22 @@
+---
+# tasks file for hosts-file
+
+- name: add gitlab entry to hosts file
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^172\.16\.2\.50'
+    line: '172.16.2.50 gitlab'
+    # removed for compatability on MacOS where hosts file group is wheel
+    #owner: root
+    #group: root
+    mode: 0644
+
+- name: add gitlab-runner entry to hosts file
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^172\.16\.2\.51'
+    line: '172.16.2.51 gitlab-runner'
+    # removed for compatability on MacOS where hosts file group is wheel
+    #owner: root
+    #group: root
+    mode: 0644

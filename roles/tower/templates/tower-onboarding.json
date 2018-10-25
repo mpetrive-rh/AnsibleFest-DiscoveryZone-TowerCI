@@ -1,0 +1,211 @@
+{
+  "organization": "Admin",
+  "asset_relation": {
+    "workflow_nodes": [
+      {
+        "name": "node0",
+        "unified_job_type": "job",
+        "success_nodes": [
+          "node1"
+        ],
+        "failure_nodes": [],
+        "unified_job_name": "gitlab-create-group",
+        "extra_data": {
+          "gitlab_create_group_visibility": "DEFINED_AT_WORKFLOW",
+          "gitlab_create_group_name": "DEFINED_AT_WORKFLOW",
+          "gitlab_create_group_description": "DEFINED_AT_WORKFLOW",
+          "gitlab_base_url": "DEFINED_AT_WORKFLOW"
+        },
+        "always_nodes": []
+      },
+      {
+        "name": "node1",
+        "unified_job_type": "job",
+        "success_nodes": [
+          "node2"
+        ],
+        "failure_nodes": [],
+        "unified_job_name": "gitlab-fork-project",
+        "extra_data": {
+          "gitlab_import_project": "DEFINED_AT_WORKFLOW",
+          "gitlab_create_group_name": "DEFINED_AT_WORKFLOW",
+          "gitlab_base_url": "DEFINED_AT_WORKFLOW"
+        },
+        "always_nodes": []
+      },
+      {
+        "name": "node2",
+        "unified_job_type": "job",
+        "success_nodes": [
+          "node3"
+        ],
+        "failure_nodes": [],
+        "unified_job_name": "tower-create-project",
+        "extra_data": {
+          "gitlab_create_group_path": "DEFINED_AT_WORKFLOW",
+          "tower_create_project_description": "DEFINED_AT_WORKFLOW",
+          "gitlab_base_url": "DEFINED_AT_WORKFLOW",
+          "tower_create_project_name": "DEFINED_AT_WORKFLOW"
+        },
+        "always_nodes": []
+      },
+      {
+        "name": "node3",
+        "unified_job_type": "job",
+        "success_nodes": [],
+        "failure_nodes": [],
+        "unified_job_name": "tower-create-job-template",
+        "extra_data": {
+          "tower_create_job_template_playbook": "DEFINED_AT_WORKFLOW",
+          "tower_create_job_template_inventory_id": "DEFINED_AT_WORKFLOW",
+          "tower_create_job_template_name": "DEFINED_AT_WORKFLOW",
+          "tower_project_id": "DEFINED_AT_WORKFLOW"
+        },
+        "always_nodes": []
+      }
+    ],
+    "roles": [
+      {
+        "team": [],
+        "name": "Execute",
+        "user": []
+      },
+      {
+        "team": [],
+        "name": "Admin",
+        "user": []
+      },
+      {
+        "team": [],
+        "name": "Read",
+        "user": []
+      }
+    ],
+  },
+  "asset_type": "workflow",
+  "survey_enabled": true,
+  "name": "tower-onboarding",
+  "survey_spec": {
+    "spec": [
+      {
+        "required": true,
+        "min": 0,
+        "default": "",
+        "max": 1024,
+        "question_description": "Gitlab group name",
+        "choices": "",
+        "variable": "gitlab_create_group_name",
+        "question_name": "Gitlab group name",
+        "type": "text"
+      },
+      {
+        "required": true,
+        "min": 0,
+        "default": "",
+        "max": 1024,
+        "question_description": "NOTE:  probably same as group name",
+        "choices": "",
+        "new_question": true,
+        "variable": "gitlab_create_group_path",
+        "question_name": "Gitlab group path",
+        "type": "text"
+      },
+      {
+        "required": true,
+        "min": 0,
+        "default": "",
+        "max": 1024,
+        "question_description": "Gitlab Group Description",
+        "choices": "",
+        "new_question": true,
+        "variable": "gitlab_create_group_description",
+        "question_name": "Gitlab Group Description",
+        "type": "text"
+      },
+      {
+        "question_description": "",
+        "min": null,
+        "default": "public",
+        "max": null,
+        "required": true,
+        "choices": "public\nprivate\ninternal",
+        "variable": "gitlab_create_group_visibility",
+        "question_name": "Gitlab group visiblity",
+        "type": "multiplechoice"
+      },
+      {
+        "required": true,
+        "min": 0,
+        "default": "gitlab",
+        "max": 1024,
+        "question_description": "",
+        "choices": "",
+        "new_question": true,
+        "variable": "gitlab_base_url",
+        "question_name": "Gitlab base url",
+        "type": "text"
+      },
+      {
+        "required": true,
+        "min": 0,
+        "default": "tower-starter-pack",
+        "max": 1024,
+        "question_description": "",
+        "choices": "",
+        "variable": "gitlab_import_project",
+        "question_name": "Gitlab Project to from",
+        "type": "text"
+      },
+      {
+        "required": true,
+        "min": 0,
+        "default": "",
+        "max": 1024,
+        "question_description": "",
+        "choices": "",
+        "new_question": true,
+        "variable": "tower_create_project_name",
+        "question_name": "Tower project name",
+        "type": "text"
+      },
+      {
+        "required": true,
+        "min": 0,
+        "default": "default description",
+        "max": 1024,
+        "question_description": "",
+        "choices": "",
+        "new_question": true,
+        "variable": "tower_create_project_description",
+        "question_name": "Tower project description",
+        "type": "text"
+      },
+      {
+        "question_description": "",
+        "min": 0,
+        "default": "tower-starter-job-template",
+        "max": 1024,
+        "required": true,
+        "choices": "",
+        "new_question": true,
+        "variable": "tower_create_job_template_name",
+        "question_name": "Tower Job Template Name",
+        "type": "text"
+      },
+      {
+        "question_description": "",
+        "min": 0,
+        "default": "hello_world.yml",
+        "max": 1024,
+        "required": true,
+        "choices": "",
+        "new_question": true,
+        "variable": "tower_create_job_template_playbook",
+        "question_name": "Tower Job Template Playbook",
+        "type": "text"
+      }
+    ],
+    "name": "",
+    "description": ""
+  }
+}

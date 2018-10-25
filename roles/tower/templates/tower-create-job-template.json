@@ -1,0 +1,59 @@
+{
+  "asset_type": "job_template",
+  "inventory": "{{tower_inventory.id}}",
+  "name": "tower-create-job-template",
+  "organization": "{{tower_org.id}}",
+  "playbook": "tower_create_job_template.yml",
+  "project": "{{tower_proj.id}}",
+  "survey_enabled": true,
+  "survey_spec": {
+    "description": "",
+    "name": "",
+    "spec": [
+      {
+        "choices": "",
+        "default": "",
+        "max": 1024,
+        "min": 0,
+        "question_description": "",
+        "question_name": "Tower Job Template Name",
+        "required": true,
+        "type": "text",
+        "variable": "tower_create_job_template_name"
+      },
+      {
+        "choices": "",
+        "default": "",
+        "max": 1024,
+        "min": 0,
+        "question_description": "",
+        "question_name": "Tower Inventory ID",
+        "required": true,
+        "type": "text",
+        "variable": "tower_create_job_template_inventory_id"
+      },
+      {
+        "choices": "",
+        "default": "",
+        "max": 1024,
+        "min": 0,
+        "question_description": "",
+        "question_name": "Tower Project ID",
+        "required": true,
+        "type": "text",
+        "variable": "tower_project_id"
+      },
+      {
+        "choices": "",
+        "default": "hello_world.yml",
+        "max": 1024,
+        "min": 0,
+        "question_description": "",
+        "question_name": "Tower playbook name",
+        "required": true,
+        "type": "text",
+        "variable": "tower_create_job_template_playbook"
+      }
+    ]
+  }
+}

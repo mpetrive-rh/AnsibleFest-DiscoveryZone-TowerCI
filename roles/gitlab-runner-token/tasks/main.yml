@@ -1,0 +1,47 @@
+---
+
+# - name: determine if alreay in API settings
+#   lineinfile:
+#     path: /opt/gitlab/embedded/service/gitlab-rails/lib/api/entities.rb
+#     line: "      expose :runners_registration_token, as: :runners_registration_token"
+#     regexp: "      expose :runners_registration_token, as: :runners_registration_token"
+#     state: present
+#   register: lif
+
+# - name: expose the runner registration token via rails API settings
+#   lineinfile:
+#     path: /opt/gitlab/embedded/service/gitlab-rails/lib/api/entities.rb
+#     line: "      expose :runners_registration_token, as: :runners_registration_token"
+#     firstmatch: yes
+#     insertafter: ".*password_authentication_enabled_for_web.*"
+#     state: present
+#   register: gilab_expose_token
+#   when: lif.changed
+#
+# - name: restart gitlab when file updated
+#   command: gitlab-ctl restart
+#   when: gilab_expose_token.changed | default(False)
+
+# - name: wait for web service to become available
+#   uri:
+#     url: https://localhost/api/v4/application/settings
+#     validate_certs: no
+#     return_content: yes
+#     body_format: json
+#   register: ws
+#   until: ws.status == 200
+#   retries: 20
+#   delay: 10
+
+- name: get shared runner token
+  command: >
+    gitlab-rails runner
+      "puts Gitlab::CurrentSettings.current_application_settings.runners_registration_token"
+  register: grt
+  changed_when: False
+
+- name: set fact for token.  This should override included var
+  set_fact:
+    gitlab_runner_registration_token: "{{ grt.stdout }}"
+
+- debug: var=gitlab_runner_registration_token

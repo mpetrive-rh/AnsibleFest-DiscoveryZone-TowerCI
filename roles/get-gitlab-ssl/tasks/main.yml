@@ -1,0 +1,7 @@
+---
+# tasks file for get-gitlab-ssl
+
+- name: get cert file from gitlab vm
+  fetch:
+    src: /etc/gitlab/ssl/gitlab.crt
+    dest: /tmp

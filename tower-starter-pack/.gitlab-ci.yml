@@ -1,0 +1,18 @@
+stages:
+  - lint
+  - molecule
+
+ansible_linting:
+  variables:
+    GIT_SSL_NO_VERIFY: "True"
+  stage: lint
+  script:
+    - ansible-lint *.yml
+
+molecule:
+  variables:
+    GIT_SSL_NO_VERIFY: "True"
+  stage: molecule
+  script:
+    - cd roles/nginx_base
+    - molecule --debug test

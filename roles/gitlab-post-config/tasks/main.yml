@@ -1,0 +1,27 @@
+---
+
+# this is needed since newer versions of gitlab do not setup SSL
+# if certs are not in place.  The geerlingguy.gitlab role does NOT
+# do a reconfigure after the certificat create and deploy
+- name: determine if SSL configured
+  uri:
+    url: https://gitlab
+    validate_certs: False
+  ignore_errors: yes
+  register: gitlab_ssl
+
+- name: Reconfigure GitLab (first run).
+  command: >
+    gitlab-ctl reconfigure
+  failed_when: false
+  register: gitlab_configure
+  when: gitlab_ssl.failed
+
+- name: initialize the root password if defined
+  shell: gitlab-rake gitlab:setup <<< yes
+  environment:
+    RAILS_ENV: production
+    GITLAB_ROOT_PASSWORD: "{{gitlab_root_password}}"
+  become: yes
+  become_user: git
+  when: gitlab_configure.changed and gitlab_root_password is defined
