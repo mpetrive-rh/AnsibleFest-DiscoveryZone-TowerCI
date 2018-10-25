@@ -1,0 +1,12 @@
+*.retry
+.vagrant/
+roles/geerlingguy.gitlab
+roles/geerlingguy.gitlab.mod
+roles/riemers.gitlab-runner
+license.txt
+*.pyc
+__pycache__
+*.log
+vars/main.yml
+roles/geerlingguy.gitlab
+roles/riemers.gitlab-runner
