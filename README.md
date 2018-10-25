@@ -39,10 +39,16 @@ git clone REPO REPO_DIR
 cd REPO DIR
 ```
 
-* Copy `vars/main_template.yml` to `vars/main.yml`
+* Copy vars file template to vars file utilized
 
 ```
 cp vars/main_template.yml vars/main.yml
+```
+
+* Add Ansible Tower license file at correct location, `license.txt`
+
+```
+cp LICENSE_FILE_LOCATION license.txt
 ```
 
 * Install required roles:
