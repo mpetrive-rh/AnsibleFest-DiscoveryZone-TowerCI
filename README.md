@@ -21,7 +21,7 @@ This project provides an environment to demonstrate a basic GitLab CI/CD pipelin
 ### Machines provisioned
 * GitLab URL: [https://172.16.2.50/](https://172.16.2.50/)
 * Gitlab Runner : 172.16.2.51
-* Ansible Tower: [https://172.16.2.52](https:/172.16.2.52)
+* Ansible Tower: [https://172.16.2.52](https://172.16.2.52)
 
 ### Gitlab Runner
 
