@@ -63,13 +63,16 @@ ansible-galaxy install -r roles/requirements.yml -p roles/
 vagrant up gitlab
 ```
 
-* Follow instructions in ansible playbook error to create an access token and add to `vars/main.yml`
+* Follow instructions in ansible playbook error to create an access token with **api** scope and add to `vars/main.yml`. Details on personal access token can be found in the [gitlab documentation](https://docs.gitlab.com/ce/user/profile/personal_access_tokens.html)
 
 ```
 gitlab_private_token is not defined.  Please login in to the web interface
 as root and obtain a personal access token at https://gitlab/profile/personal_access_tokens.
 The token values should be added to the vars/main.yml file
 ```
+![Gitlab personal access token](img/gitlab-access-token1.png "")
+
+![Gitlab personal access token](img/gitlab-access-token2.png "")
 
 * Finish provisioning on gitlab CE server
 
