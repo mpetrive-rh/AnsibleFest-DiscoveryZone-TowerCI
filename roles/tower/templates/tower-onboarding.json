@@ -153,7 +153,7 @@
         "question_description": "",
         "choices": "",
         "variable": "gitlab_import_project",
-        "question_name": "Gitlab Project to from",
+        "question_name": "Gitlab Project to fork",
         "type": "text"
       },
       {
