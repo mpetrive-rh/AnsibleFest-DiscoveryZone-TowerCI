@@ -53,7 +53,7 @@ end
 cluster.vm.define "gitlab-runner" do |config|
   config.vm.box = "centos/7"
   ##config.ssh.insert_key = false
-  config.hostmanager.enabled = true
+  #config.hostmanager.enabled = true
   config.vm.provider :virtualbox do |vb, override|
     vb.customize ["modifyvm", :id, "--memory", "512"]
     vb.customize ["modifyvm", :id, "--cpus", "2"]
@@ -73,7 +73,7 @@ end
 cluster.vm.define "ansible-tower" do |config|
   config.vm.box = "ansible/tower"
   ##config.ssh.insert_key = false
-  config.hostmanager.enabled = true
+  #config.hostmanager.enabled = true
   config.vm.provider :virtualbox do |vb, override|
     vb.customize ["modifyvm", :id, "--memory", "2048"]
     vb.customize ["modifyvm", :id, "--cpus", "2"]
