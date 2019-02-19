@@ -1,0 +1,9 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || ((apt -y update && apt install -y python-minimal) || (yum -y install python2 libselinux-python))
+      become: true
+      changed_when: false

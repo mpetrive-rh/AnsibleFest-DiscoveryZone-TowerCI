@@ -3,14 +3,25 @@
 
 dependency:
   name: galaxy
-driver:
-  name: docker
+# dependency:
+#   name: shell
+#   command: echo "ANSIBLE GREATNESS"
 lint:
   name: yamllint
+driver:
+  name: docker
 platforms:
-  - name: instance
-    image: milcom/centos7-systemd
+  - name: instance1
+    # image: centos/systemd:latest
+    image: centos:7
+    command: /sbin/init
+    capabilities:
+      - SYS_ADMIN
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
+    environment:
+      container: docker
 provisioner:
   name: ansible
   lint:
