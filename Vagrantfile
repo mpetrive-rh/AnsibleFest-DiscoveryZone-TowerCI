@@ -38,8 +38,17 @@ cluster.vm.define "gitlab" do |config|
     vb.customize ["modifyvm", :id, "--memory", "2048"]
     vb.customize ["modifyvm", :id, "--cpus", "2"]
   end
+
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.memory = 4096
+    libvirt.cpus = 2
+  end  #end libvirt provider
+
   config.vm.hostname = "gitlab"
   config.vm.network :private_network, ip: "172.16.2.50"
+
+  config.vm.network "forwarded_port", guest: 443, host: 5443, host_ip: "192.168.1.100"
+
   config.vm.provision "ansible" do |ansible|
     ansible.playbook = "site.yml"
     ansible.groups = {
@@ -58,6 +67,12 @@ cluster.vm.define "gitlab-runner" do |config|
     vb.customize ["modifyvm", :id, "--memory", "512"]
     vb.customize ["modifyvm", :id, "--cpus", "2"]
   end
+  
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.memory = 4096
+    libvirt.cpus = 2
+  end  
+
   config.vm.hostname = "gitlab-runner"
   config.vm.network :private_network, ip: "172.16.2.51"
   config.vm.provision "ansible" do |ansible|
@@ -71,7 +86,7 @@ cluster.vm.define "gitlab-runner" do |config|
 end
 
 cluster.vm.define "ansible-tower" do |config|
-  config.vm.box = "ansible/tower"
+  config.vm.box = "centos/7"
   ##config.ssh.insert_key = false
   #config.hostmanager.enabled = true
   config.vm.provider :virtualbox do |vb, override|

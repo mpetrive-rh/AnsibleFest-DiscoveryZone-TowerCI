@@ -1,7 +1,8 @@
 ---
-
-tower_default_admin_org: Admin
-tower_default_os_user: vagrant
-tower_default_api_host: localhost
-tower_default_user: admin
-tower_default_password: password
+# defaults file for tower
+towerversion: 3.5.0-1
+towerapiversion: 3.5.0
+rabbitpass: password2
+pgpass: password3
+towerchk: undefined
+towerpass: password1

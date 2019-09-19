@@ -2,7 +2,7 @@
 
 # this is needed since newer versions of gitlab do not setup SSL
 # if certs are not in place.  The geerlingguy.gitlab role does NOT
-# do a reconfigure after the certificat create and deploy
+# do a reconfigure after the certificate create and deploy
 - name: determine if SSL configured
   uri:
     url: https://gitlab

@@ -1,4 +1,4 @@
-*.retry
+B*.retry
 .vagrant/
 roles/geerlingguy.gitlab
 roles/geerlingguy.gitlab.mod
@@ -10,3 +10,4 @@ __pycache__
 vars/main.yml
 roles/geerlingguy.gitlab
 roles/riemers.gitlab-runner
+roles/capitanh.openldap-ansible-role

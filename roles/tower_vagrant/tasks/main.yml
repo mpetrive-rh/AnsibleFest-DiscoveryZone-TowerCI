@@ -1,0 +1,334 @@
+---
+
+- name: ensure licsense file exists
+  stat:
+    path: license.txt
+  register: license_status
+  connection: local
+  become: false
+  delegate_to: localhost
+
+- name: fail when license file not found
+  fail:
+    msg: "Ansible Tower license must be placed in {{playbook_dir}}/license.txt at root of repo"
+  when: not license_status.stat.exists
+
+- name: tower setup block
+  block:
+
+  - name: install deps
+    yum:
+      name:
+      - expect
+      - python-pip
+      state: present
+    become: yes
+    when: not skip_remote | default(False)
+
+  - name: upgrade Jinja2 to latest for access to new filters
+    pip:
+      virtualenv: /var/lib/awx/venv/ansible
+      name: Jinja2
+      state: latest
+    when: not skip_remote | default(False)
+
+  # - name: install latest pexpect
+  #   pip:
+  #     name: pexpect
+  #     state: latest
+
+  # - name: set ansible tower admin password
+  #   expect:
+  #     command: tower-manage changepassword admin
+  #     responses:
+  #       "Password:": "password"
+  #       "Password (again):": "password"
+  #       "Changing password for user 'admin'": None
+  #       "Password changed successfully for user 'admin'": None
+  #     echo: yes
+
+  - name: ensure tower admin password is set
+    shell: |
+      set timeout 300
+      spawn tower-manage changepassword admin
+
+      expect "Password:"
+      send "password\n"
+
+      expect "Password (again):"
+      send "password\n"
+
+      expect "Password changed successfully for user 'admin'"
+
+      exit 0
+    args:
+      executable: /usr/bin/expect
+    become: yes
+    when: not skip_remote | default(False)
+    #tags: tower_license
+
+  - name: post license key
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/config/"
+      method: POST
+      body: "{{ lookup('file', 'license.txt') | from_json | combine(eula_accepted) }}"
+      body_format: json
+    vars:
+      eula_accepted:
+        eula_accepted: true
+    tags: tower_license
+
+  - name: install tower cli
+    pip:
+      name: ansible-tower-cli
+      state: present
+    become: true
+    when: not skip_remote | default(False)
+
+  - name: ensure "{{ tower_default_os_user }}" user has a private key
+    user:
+      name: "{{ tower_default_os_user }}"
+      ssh_key_file: .ssh/id_rsa
+      ssh_key_bits: 2048
+      generate_ssh_key: yes
+
+  - name: get contents of "{{ tower_default_os_user }}" public key
+    slurp:
+      src: "/home/{{ tower_default_os_user }}/.ssh/id_rsa.pub"
+    register: key
+    changed_when: false
+
+  - name: add public key to gitlab root user
+    uri:
+      url: https://gitlab/api/v4/user/keys
+      method: POST
+      body:
+        title: tower-default
+        key: "{{key.content | b64decode }}"
+      body_format: json
+      headers:
+        Private-Token:  "{{gitlab_private_token}}"
+      status_code:
+        - 200
+        - 201
+        - 400
+    register: gitlab_key_add
+    changed_when: gitlab_key_add.status in (200,201)
+
+  - name: create admin organization
+    tower_organization:
+      name: "{{ tower_default_admin_org }}"
+    register: tower_org
+
+  - name: create admin credential for gitlab
+    tower_credential:
+      kind: scm
+      name: gitlab-root
+      username: root
+      ssh_key_data: "/home/{{ tower_default_os_user }}/.ssh/id_rsa"
+      organization: "{{ tower_default_admin_org }}"
+
+  - name: create onboarding project tower-onboarding
+    tower_project:
+      scm_credential: gitlab-root
+      name: tower-onboarding
+      scm_url: git@gitlab:root/tower-onboarding.git
+      scm_type: git
+      organization: "{{ tower_default_admin_org }}"
+    ignore_errors: yes
+    register: tower_proj
+
+  - name: create inventory, tower-local
+    tower_inventory:
+      name: tower-local
+      organization: "{{ tower_default_admin_org }}"
+      state: present
+    register: tower_inventory
+
+  - name: Add explict localhost to tower-local inventory
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/inventories/{{tower_inventory.id}}/hosts"
+      method: POST
+      body:
+        name: "localhost"
+        description: "default localhost"
+        inventory: "{{tower_inventory.id}}"
+        enabled: true
+      body_format: json
+    ignore_errors: yes
+
+  - name: add gitlab token credential type
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/credential_types/"
+      method: POST
+      body:
+        name: "gitlab-api-token"
+        kind: "cloud"
+        inputs:
+          fields:
+            - secret: true
+              type: "string"
+              id: "gitlab_access_token"
+              label: "Gitlab API token"
+        injectors:
+          extra_vars:
+            gitlab_access_token: "{%raw%}{{gitlab_access_token}}{%endraw%}"
+      body_format: json
+      status_code:
+        - 200
+        - 201
+        - 400
+
+  - name: get gitlab token credential type
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/credential_types/?name=gitlab-api-token"
+      method: GET
+      status_code:
+        - 200
+        - 201
+        - 400
+    register: tower_credential_git_token_type
+
+  - set_fact:
+      tower_credential_git_token_type_id: "{{tower_credential_git_token_type.json.results[0].id}}"
+
+  - name: create gitlab token credential type
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/credentials/"
+      method: POST
+      body:
+        name: gitlab-api-token
+        organization: "{{tower_org.id}}"
+        credential_type: "{{tower_credential_git_token_type_id}}"
+        inputs:
+          gitlab_access_token: "{{gitlab_private_token}}"
+      body_format: json
+      status_code:
+        - 200
+        - 201
+        - 400
+
+  - name: get gitlab token credential
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/credentials/?name=gitlab-api-token"
+      method: GET
+      status_code:
+        - 200
+        - 201
+    register: tower_credential_git_token
+
+  - set_fact:
+      tower_credential_git_token_id: "{{ tower_credential_git_token.json.results[0].id | int}}"
+
+  - name: get tower credential type
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/credential_types/?name=Ansible%20Tower"
+      method: GET
+      status_code:
+        - 200
+        - 201
+        - 400
+    register: tower_credential_tower_type
+
+  - set_fact:
+      tower_credential_tower_type_id: "{{tower_credential_tower_type.json.results[0].id}}"
+
+  - name: add tower credentials
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/credentials/"
+      method: POST
+      body:
+        name: "tower-api"
+        organization: "{{tower_org.id}}"
+        credential_type: "{{tower_credential_tower_type_id}}"
+        inputs:
+          username: admin
+          password: password
+          host: localhost
+      body_format: json
+      status_code:
+        - 200
+        - 201
+        - 400
+
+  - name: get tower credential
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/credentials/?name=tower-api"
+      method: GET
+      status_code:
+        - 200
+        - 201
+    register: tower_credential_tower
+
+  - set_fact:
+      tower_credential_tower_id: "{{tower_credential_tower.json.results[0].id | int}}"
+
+  - name: create onboarding workflow
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/workflow_job_templates/"
+      method: POST
+      body:
+        name: "tower-onboarding"
+        organization: "{{tower_org.id}}"
+        survey_enabled: true
+      body_format: json
+      status_code:
+        - 200
+        - 201
+        - 400
+
+  - name: get onboarding workflow
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/workflow_job_templates/?name=tower-onboarding"
+      method: GET
+      status_code:
+        - 200
+        - 201
+    register: workflow_job
+
+  - set_fact:
+      workflow_job_id: "{{workflow_job.json.results[0].id}}"
+
+  - include_vars:
+      file: "{{role_path}}/templates/tower-onboarding.json"
+      name: workflow_detail
+
+  - name: add survey onboarding workflow
+    uri:
+      url: "https://{{ tower_default_api_host }}/api/v2/workflow_job_templates/{{workflow_job_id}}/survey_spec/"
+      method: POST
+      body: "{{workflow_detail.survey_spec}}"
+      body_format: json
+      status_code:
+        - 200
+        - 201
+        - 400
+
+  # order matters...this will be the order the workflow nodes are constructed in
+  - set_fact:
+      job_templates:
+        - gitlab-create-group
+        - gitlab-fork-project
+        - tower-create-project
+        - tower-create-job-template
+
+  - include_tasks: create_job_template.yml
+    with_items: "{{job_templates}}"
+
+  module_defaults:
+    tower_project: "{{tower_auth}}"
+    tower_organization: "{{tower_auth}}"
+    tower_credential: "{{tower_auth}}"
+    tower_inventory: "{{tower_auth}}"
+    uri:
+      user: "{{ tower_default_user }}"
+      password: "{{ tower_default_password }}"
+      validate_certs: False
+      follow_redirects: all
+      force_basic_auth: yes
+      return_content: yes
+  vars:
+    tower_auth:
+      tower_host: "{{ tower_default_api_host }}"
+      tower_username: "{{ tower_default_user }}"
+      tower_password: "{{ tower_default_password}}"

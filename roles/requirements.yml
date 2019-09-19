@@ -4,3 +4,8 @@
 
 - src: riemers.gitlab-runner
   version: v1.1.8
+
+# - src: bennojoy.openldap_server
+#   version: master
+- src: capitanh.openldap-ansible-role
+  version: master
