@@ -3,12 +3,16 @@
 
 dependency:
   name: galaxy
+# dependency:
+#   name: shell
+#   command: echo "ANSIBLE GREATNESS"
 lint:
   name: yamllint
 driver:
   name: docker
 platforms:
   - name: instance1
+    # image: centos/systemd:latest
     image: centos:7
     command: /sbin/init
     capabilities:
