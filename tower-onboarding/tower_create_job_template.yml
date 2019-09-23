@@ -4,8 +4,10 @@
   gather_facts: false
   vars:
     tower_base_url: "{{ lookup('ENV', 'TOWER_HOST')}}"
-    tower_user: "{{ lookup('ENV', 'TOWER_USERNAME')}}"
-    tower_password: "{{ lookup('ENV', 'TOWER_PASSWORD')}}"
+    # tower_user: "{{ lookup('ENV', 'TOWER_USERNAME')}}"
+    # tower_password: "{{ lookup('ENV', 'TOWER_PASSWORD')}}"
+    tower_user: admin
+    tower_password: password1
   tasks:
     - name: create tower job template
       uri:

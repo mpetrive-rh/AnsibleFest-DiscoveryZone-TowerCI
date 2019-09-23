@@ -5,11 +5,6 @@
     name: epel-release
     state: present
 
-- name: setup EPEL
-  yum:
-    name: epel-release
-    state: present
-
 - name: install dependencies
   yum:
     name: "{{item}}"
@@ -29,6 +24,12 @@
   with_items:
   - pip
   - setuptools
+
+- name: Install molecule
+  pip:
+    name: "{{item}}"
+    state: latest
+  with_items:
   - molecule
   - docker
 

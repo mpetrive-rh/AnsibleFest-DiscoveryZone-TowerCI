@@ -3,7 +3,7 @@
   connection: local
   gather_facts: false
   vars:
-    gitlab_namespace: root
+    gitlab_namespace: AutomationContent
   vars_files:
   - vars/gitlab.yml
   tasks:

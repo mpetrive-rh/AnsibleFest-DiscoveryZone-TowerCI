@@ -8,49 +8,59 @@
       The token values should be added to the vars/main.yml file
   when: gitlab_private_token is not defined
 
-- name: ensure git is insalled
-  yum:
-    name: git
-    state: present
-  become: yes
+- block:
+  - yum:
+      name: epel-release
+      state: installed
+    become: yes
+      
+  - name: ensure git is insalled
+    yum:
+      name: git, python-pip
+      state: present
+    become: yes
+    
+  - name: ensure gitlab python installed
+    pip:
+      name: python-gitlab
+      state: present
+    become: yes
+  when: not skip_pkgs | default(false) | bool
 
 - name: gitlab automation
   block:
 
-  - name: ensure vagrant user has a PPK pair
-    user:
-      name: vagrant
-      ssh_key_file: .ssh/id_rsa
-      ssh_key_bits: 2048
-      generate_ssh_key: yes
+  - include_tasks: add-key.yml
 
-  - name: get contens of public key
-    shell: cat /home/vagrant/.ssh/id_rsa.pub
-    register: key
+  - name: create gitlab group(s)
+    gitlab_group:
+      name: AutomationContent
+      state: present
+      visibility: public
+    tags: project
 
-  - name: add public key to gitlab root user
-    uri:
-      url: https://localhost/api/v4/user/keys
-      method: POST
-      body:
-        title: default
-        key: "{{key.stdout}}"
-      status_code:
-        - 200
-        - 201
-        - 400
-    register: project_exists
-    ignore_errors: yes
+  - name: create gitlab users
+    gitlab_user:
+      username: ansiblefest
+      password: password
+      email: ansiblefest@gitlab.fest.com
+      name: ansiblefest
+      #ssh key doesn't work
+      # sshkey_file: /home/vagrant/.ssh/id_rsa.pub
+      # sshkey_name: default
+      isadmin: no
 
-  - include_tasks: import_project.yml
+  - include_tasks: 
+      file: import_project.yml
+      apply:
+        tags: project
     vars:
-      gitlab_import_project: tower-onboarding
+      gitlab_import_project: "{{ item }}"
+    tags: project
+    loop:
+    - tower-onboarding
+    - tower-starter-pack
 
-  - include_tasks: import_project.yml
-    vars:
-      gitlab_import_project: tower-starter-pack
-
-  remote_user: vagrant
   become: false
   module_defaults:
     uri:
@@ -59,4 +69,19 @@
       body_format: json
       headers:
         Private-Token:  "{{gitlab_private_token}}"
+    gitlab_group:
+      #api_url:  "https://localhost/"
+      server_url:  "https://localhost/"
+      validate_certs: False
+      api_token: "{{ gitlab_private_token }}"
+    gitlab_user:
+      #api_url:  "https://localhost/"
+      server_url:  "https://localhost/"
+      validate_certs: False
+      api_token: "{{ gitlab_private_token }}"
+    gitlab_project:
+      #api_url:  "https://localhost/"
+      server_url:  "https://localhost/"
+      validate_certs: False
+      api_token: "{{ gitlab_private_token }}"
       #force_basic_auth: yes

@@ -1,0 +1,26 @@
+---
+
+- name: ensure vagrant user has a PPK pair
+  user:
+    name: vagrant
+    ssh_key_file: .ssh/id_rsa
+    ssh_key_bits: 2048
+    generate_ssh_key: yes
+
+- name: get contents of public key
+  shell: cat /home/vagrant/.ssh/id_rsa.pub
+  register: key
+  changed_when: false
+
+- name: add public key to gitlab root user
+  uri:
+    url: https://localhost/api/v4/user/keys
+    method: POST
+    body:
+      title: default
+      key: "{{key.stdout}}"
+    status_code:
+      - 200
+      - 201
+      - 400
+  ignore_errors: yes

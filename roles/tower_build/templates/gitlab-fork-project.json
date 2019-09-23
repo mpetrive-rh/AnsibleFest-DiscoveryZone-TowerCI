@@ -1,0 +1,52 @@
+{
+  "__credential": "{{tower_credential_git_token_id}}",
+  "__credential_type": "{{tower_credential_git_token_type_id}}",
+  "asset_type": "job_template",
+  "inventory": "{{tower_inventory.id}}",
+  "name": "gitlab-fork-project",
+  "organization": "{{tower_org.id}}",
+  "playbook": "gitlab_fork_project.yml",
+  "project": "{{tower_proj.id}}",
+  "survey_enabled": true,
+  "survey_spec": {
+    "description": "",
+    "name": "",
+    "spec": [
+      {
+        "choices": "",
+        "default": "",
+        "max": 1024,
+        "min": 0,
+        "new_question": true,
+        "question_description": "",
+        "question_name": "Gitlab project fork",
+        "required": true,
+        "type": "text",
+        "variable": "gitlab_import_project"
+      },
+      {
+        "choices": "",
+        "default": "",
+        "max": 1024,
+        "min": 0,
+        "question_description": "",
+        "question_name": "Gitlab group destination",
+        "required": true,
+        "type": "text",
+        "variable": "gitlab_create_group_name"
+      },
+      {
+        "choices": "",
+        "default": "gitlab",
+        "max": 1024,
+        "min": 0,
+        "new_question": true,
+        "question_description": "",
+        "question_name": "Gitlab Base URL",
+        "required": true,
+        "type": "text",
+        "variable": "gitlab_base_url"
+      }
+    ]
+  }
+}
